@@ -1,5 +1,9 @@
+from src.langgraphagenticai.LLMS.groqllm import GroqLLM
 import streamlit as st
 from src.langgraphagenticai.ui.streamlitui.loadui import LoadStreamlitUI
+from src.langgraphagenticai.LLMS.groqllm import GroqLLM
+from src.langgraphagenticai.graph.graph_builder import GraphBuilder
+from src.langgraphagenticai.ui.display_result import DisplayResultStreamlit
 # Make sure to import GroqLLM, for example:
 # from src.langgraphagenticai.llms import GroqLLM 
 
@@ -18,28 +22,31 @@ def load_langgraph_agentic_app():
         st.error("Error: Failed to load user input from the UI")
         return 
 
-    # FIX 3: Moved the usecase check here so it validates before processing chat
-    usecase = user_input.get("selected_usecase")
-    if not usecase:
-        st.error("No use case selected")
-        return  # FIXED: Removed the extra space that was causing an IndentationError here
-
-    # FIX 4: Corrected indentation for the chat input
-    user_message = st.chat_input("Enter your message:")
-    
+    user_message=st.chat_input("Enter youre message:")
     if user_message:
-        # FIX 5: Indented the try block and added the missing except block
         try:
-            obj_llm_config = GroqLLM(user_controls_input=user_input)
-            model = obj_llm_config.get_llm_model()
+          obj_llm_config=GroqLLM(user_controls_input=user_input)
+          model=obj_llm_config.get_llm_model()
+          
+          if not model:
+                        st.error("Error:LLM could not initilized")
+                        return
 
-            if not model:
-                st.error("Error: Failed to load the LLM model.")
-                return 
-                
-            # Add your logic here to handle the user_message with the model
-            # st.write(f"Processing: {user_message}")
-
+                        usecase=user_input.get("selected_usecase")
+                        if not usecase:
+                            st.error("Error:Usecase could not be selected")
+                            return
+                        
+          graph_builder=GraphBuilder(model)
+          try:
+            graph=graph_builder.setup_graph(usecase)
+            DisplayResultStreamlit(usecase,graph,user_message).display_result_on_ui()
+          except Exception as e:
+                st.error(f"Error:Graph could not be initilized{e}")
+                return
+          
+                       
+            
         except Exception as e:
-            st.error(f"An unexpected error occurred: {e}")
-            return 
+            st.error("error")
+
